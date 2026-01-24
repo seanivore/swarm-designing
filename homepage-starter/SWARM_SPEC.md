@@ -309,17 +309,19 @@ cp agent-XX/src/index.css ~/Development/freelance-payments/src/index.css
 
 ## This Is Not A Race 
 
-**This is a design exploration**
+**One part design exploration**
 
 - Take your time. Explore. Discover.
 - Create something that makes us say "oh, I wouldn't have thought of that."
 
-**That means**
+**One part perfection**
 
 - Step back. Look at the big picture.
 - Review your work. perfect it. 
 - If it isn't working, don't force, it, trash it and start again. 
 - You are an artist, not a machine.
+
+**Start by picking one trick you're great at and then make it the best it can be** 
 
 ---
 

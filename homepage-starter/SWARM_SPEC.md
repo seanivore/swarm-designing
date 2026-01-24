@@ -247,12 +247,16 @@ Each phase has ONE goal. Complete the phase, then STOP for human review.
 
 ```bash
 # From swarm-designing directory
+
+# Remove node_modules from starter (don't copy 106 packages 16 times)
+rm -rf homepage-starter/node_modules
+
 # Create agents by copying the starter
 for i in {01..16}; do
   cp -r homepage-starter agent-$i
 done
 
-# Install dependencies
+# Install dependencies in parallel
 for dir in agent-*/; do
   (cd "$dir" && npm install) &
 done

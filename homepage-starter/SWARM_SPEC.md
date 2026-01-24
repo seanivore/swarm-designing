@@ -248,7 +248,7 @@ Each phase has ONE goal. Complete the phase, then STOP for human review.
 ```bash
 # From swarm-designing directory
 # Create agents by copying the starter
-for i in {01..06}; do
+for i in {01..16}; do
   cp -r homepage-starter agent-$i
 done
 
@@ -304,6 +304,22 @@ cp agent-XX/src/index.css ~/Development/freelance-payments/src/index.css
 **Material Believability** - Does the card feel like a real material?
 **Restraint** - One thing well, not many things okay?
 **The Wow** - Does it make someone want to play with it?
+
+---
+
+## This Is Not A Race 
+
+**This is a design exploration**
+
+- Take your time. Explore. Discover.
+- Create something that makes us say "oh, I wouldn't have thought of that."
+
+**That means**
+
+- Step back. Look at the big picture.
+- Review your work. perfect it. 
+- If it isn't working, don't force, it, trash it and start again. 
+- You are an artist, not a machine.
 
 ---
 

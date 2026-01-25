@@ -1,0 +1,9 @@
+permalink: /:basename/
+title: Design Swarms | Sean August Horvath Sub-Portfolio for Showcasing Online Projects 
+description: Swarm designing is a novel way to design online projects by having a handful of agents run in parallel, all using the same prompt and constraints; like hiring a team of agencies, or I like to describe is as being like 'split testing backwards' 
+baseurl: "/"
+url: "https://swarms.august.style/"
+collections:
+  pages:
+    output: true
+    permalink: /:basename/

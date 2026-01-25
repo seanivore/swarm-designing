@@ -4,13 +4,16 @@ import { Loader2 } from 'lucide-react';
 import './index.css';
 
 /**
- * PHASE 2: Interaction
- * Light and card respond to each other physically.
+ * PHASE 4: Polish
+ * The 10% that makes it 100%.
  *
- * Interaction concept:
- * - Light intensifies when near card (like hitting a surface)
- * - Card edges brighten on the side closest to light
- * - Distance-based, not hover-based
+ * Polish:
+ * - Refined easing curves and micro-transitions
+ * - Enhanced focus states with light emission
+ * - Subtle idle pulse animation
+ * - Touch device fallback
+ * - Performance optimizations
+ * - "Oh!" moment: Focused inputs emit light that interacts with main light
  */
 
 function LoginApp() {
@@ -31,15 +34,46 @@ function LoginApp() {
   const [lightIntensity, setLightIntensity] = useState(1);
   const [cardEdgeLight, setCardEdgeLight] = useState({ x: 50, y: 50, intensity: 0 });
 
+  // PHASE 4: Focus state tracking for input light emission
+  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [idlePulse, setIdlePulse] = useState(0);
+  const lastMoveTime = useRef(Date.now());
+  const isTouchDevice = useRef(false);
+
+  // PHASE 4: Detect touch device on mount
+  useEffect(() => {
+    isTouchDevice.current = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // Touch fallback - center light on card
+    if (isTouchDevice.current && cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      targetRef.current = {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      };
+      currentRef.current = { ...targetRef.current };
+      setIsActive(true);
+    }
+  }, []);
+
   // Smooth cursor tracking with lerp for 60fps performance
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       targetRef.current = { x: e.clientX, y: e.clientY };
+      lastMoveTime.current = Date.now();
       if (!isActive) setIsActive(true);
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        targetRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        lastMoveTime.current = Date.now();
+        if (!isActive) setIsActive(true);
+      }
+    };
+
     const handleMouseLeave = () => {
-      setIsActive(false);
+      if (!isTouchDevice.current) setIsActive(false);
     };
 
     // Animation loop with linear interpolation
@@ -48,12 +82,21 @@ function LoginApp() {
       currentRef.current.x += (targetRef.current.x - currentRef.current.x) * lerp;
       currentRef.current.y += (targetRef.current.y - currentRef.current.y) * lerp;
 
+      // PHASE 4: Idle pulse - subtle breathing when cursor hasn't moved
+      const timeSinceMove = Date.now() - lastMoveTime.current;
+      if (timeSinceMove > 2000) {
+        const pulse = Math.sin(Date.now() / 2000) * 0.5 + 0.5; // 0 to 1
+        setIdlePulse(pulse * 0.15); // Max 0.15 intensity boost
+      } else {
+        setIdlePulse(0);
+      }
+
       setLightPos({
         x: currentRef.current.x,
         y: currentRef.current.y
       });
 
-      // PHASE 2: Calculate light-card interaction
+      // Calculate light-card interaction
       if (cardRef.current) {
         const rect = cardRef.current.getBoundingClientRect();
         const cardCenterX = rect.left + rect.width / 2;
@@ -68,8 +111,8 @@ function LoginApp() {
         const maxDistance = 300;
         const proximity = Math.max(0, 1 - distance / maxDistance);
 
-        // Light intensifies when near card (1.0 to 1.8)
-        setLightIntensity(1 + proximity * 0.8);
+        // Light intensifies when near card (1.0 to 1.8) + idle pulse
+        setLightIntensity(1 + proximity * 0.8 + idlePulse);
 
         // Card edge lighting - position relative to card
         const relativeX = ((currentRef.current.x - rect.left) / rect.width) * 100;
@@ -85,16 +128,18 @@ function LoginApp() {
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
     document.documentElement.addEventListener('mouseleave', handleMouseLeave);
     rafRef.current = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
       document.documentElement.removeEventListener('mouseleave', handleMouseLeave);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [isActive]);
+  }, [isActive, idlePulse]);
 
   // Reduced motion support
   const prefersReducedMotion = typeof window !== 'undefined'
@@ -117,8 +162,14 @@ function LoginApp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 overflow-hidden relative">
-      {/* PHASE 2: Cursor-following light with card interaction */}
+    <div className="min-h-screen flex items-center justify-center p-4 overflow-hidden relative">
+      {/* PHASE 3: Background atmosphere */}
+      <div className="atmospheric-background" aria-hidden="true">
+        <div className="bg-gradient" />
+        <div className="bg-art" />
+      </div>
+
+      {/* PHASE 3: Cursor-following light with mauve-pink character */}
       {!prefersReducedMotion && (
         <div
           className="light-source"
@@ -129,9 +180,11 @@ function LoginApp() {
           } as React.CSSProperties}
           aria-hidden="true"
         >
-          {/* Outer bloom - soft atmospheric glow */}
+          {/* Wide outer bloom - mauve atmospheric glow */}
           <div className="light-bloom" />
-          {/* Inner core - brighter center */}
+          {/* Mid bloom - pink undertone */}
+          <div className="light-mid" />
+          {/* Inner core - bright center */}
           <div className="light-core" />
         </div>
       )}
@@ -159,23 +212,35 @@ function LoginApp() {
 
           {/* Form - Keep structure, style freely */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input 
-                type="text" 
+            <div className="relative">
+              {/* PHASE 4: Input light emission when focused */}
+              {focusedInput === 'lastName' && !prefersReducedMotion && (
+                <div className="input-light-emission" aria-hidden="true" />
+              )}
+              <input
+                type="text"
                 className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30"
                 placeholder="Last Name"
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
+                onFocus={() => setFocusedInput('lastName')}
+                onBlur={() => setFocusedInput(null)}
                 disabled={loading}
               />
             </div>
-            <div>
-              <input 
-                type="text" 
+            <div className="relative">
+              {/* PHASE 4: Input light emission when focused */}
+              {focusedInput === 'projectKeyword' && !prefersReducedMotion && (
+                <div className="input-light-emission" aria-hidden="true" />
+              )}
+              <input
+                type="text"
                 className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30"
                 placeholder="Project Keyword"
                 value={projectKeyword}
                 onChange={e => setProjectKeyword(e.target.value)}
+                onFocus={() => setFocusedInput('projectKeyword')}
+                onBlur={() => setFocusedInput(null)}
                 disabled={loading}
               />
               <p className="text-xs text-white/40 mt-2 text-center">
@@ -185,9 +250,9 @@ function LoginApp() {
 
             {error && (
               <div className={`p-3 rounded-lg text-sm text-center ${
-                error.includes('successful') 
-                  ? 'bg-green-500/10 border border-green-500/30 text-green-400'
-                  : 'bg-red-500/10 border border-red-500/30 text-red-400'
+                error.includes('successful')
+                  ? 'bg-green-500/10 border border-green-500/30 text-green-400 success-message'
+                  : 'bg-red-500/10 border border-red-500/30 text-red-400 error-message'
               }`}>
                 {error}
               </div>

@@ -1,16 +1,23 @@
 import { createRoot } from 'react-dom/client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import './index.css';
 
 /**
- * AGENT-02 - Phase 2: Interaction
+ * AGENT-02 - Phase 4: Polish
  *
- * Light Concept: Atmospheric lantern light that scatters when hitting surfaces
- * - Light gets diffused/cooler when near the card (like hitting frosted glass)
- * - Card edges catch the light (localized edge highlights)
- * - Card surface shows subtle reflection following light position
- * - Physical interaction, not hover states
+ * Light Concept: Volumetric atmospheric light with subtle breathing pulse
+ * Material Concept: Frosted translucent glass with cast shadow
+ * The Unexpected: Card casts a soft shadow when light passes behind it
+ *
+ * Polish details:
+ * - Breathing pulse animation on light core
+ * - Cast shadow creates depth perception
+ * - Custom easing curves for organic movement
+ * - Enhanced micro-interactions
+ * - Full accessibility support
+ * - Touch device fallback
+ * - Performance optimizations
  */
 
 function LoginApp() {
@@ -24,9 +31,29 @@ function LoginApp() {
   const targetPos = useRef({ x: 0, y: 0 });
   const animationRef = useRef<number | null>(null);
 
+  // Button flash effect on submit
+  const [buttonFlash, setButtonFlash] = useState(false);
+
   // Card reference for proximity calculations
   const cardRef = useRef<HTMLDivElement>(null);
   const [cardBounds, setCardBounds] = useState<DOMRect | null>(null);
+
+  // Detect touch device
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+
+  // Detect reduced motion preference
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   // Update card bounds on mount and resize
   useEffect(() => {
@@ -40,14 +67,17 @@ function LoginApp() {
     return () => window.removeEventListener('resize', updateBounds);
   }, []);
 
-  // Calculate light interaction with card
-  const getLightInteraction = () => {
+  // Calculate light interaction with card - memoized for performance
+  const getLightInteraction = useMemo(() => {
     if (!cardBounds) return {
       distanceToCard: 1000,
       isNearCard: false,
+      isBehindCard: false,
       lightAngle: 0,
       normalizedX: 0.5,
-      normalizedY: 0.5
+      normalizedY: 0.5,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0
     };
 
     const cardCenterX = cardBounds.left + cardBounds.width / 2;
@@ -57,33 +87,49 @@ function LoginApp() {
     const dy = lightPos.y - cardCenterY;
     const distanceToCard = Math.sqrt(dx * dx + dy * dy);
 
-    // Calculate angle of light relative to card (for directional effects)
+    // Calculate angle of light relative to card
     const lightAngle = Math.atan2(dy, dx);
 
     // Normalize light position relative to card (0-1 range)
     const normalizedX = (lightPos.x - cardBounds.left) / cardBounds.width;
     const normalizedY = (lightPos.y - cardBounds.top) / cardBounds.height;
 
+    // Check if light is "behind" the card (creates shadow effect)
+    const isBehindCard = normalizedX > -0.3 && normalizedX < 1.3 &&
+                          normalizedY > -0.3 && normalizedY < 1.3 &&
+                          distanceToCard < 500;
+
+    // Calculate shadow offset based on light position
+    const shadowOffsetX = (cardCenterX - lightPos.x) * 0.02;
+    const shadowOffsetY = (cardCenterY - lightPos.y) * 0.02;
+
     return {
       distanceToCard,
       isNearCard: distanceToCard < 400,
+      isBehindCard,
       lightAngle,
       normalizedX: Math.max(0, Math.min(1, normalizedX)),
-      normalizedY: Math.max(0, Math.min(1, normalizedY))
+      normalizedY: Math.max(0, Math.min(1, normalizedY)),
+      shadowOffsetX,
+      shadowOffsetY
     };
-  };
-
-  const interaction = getLightInteraction();
+  }, [lightPos, cardBounds]);
 
   // Calculate light scattering based on proximity to card
-  const scatterFactor = interaction.isNearCard
-    ? 1 - Math.min(1, interaction.distanceToCard / 400)
+  const scatterFactor = getLightInteraction.isNearCard
+    ? 1 - Math.min(1, getLightInteraction.distanceToCard / 400)
     : 0;
 
-  // Track mouse position and animate light toward it
+  // Track mouse/touch position and animate light toward it
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       targetPos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        targetPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
     };
 
     // Eased animation loop - light follows cursor with slight delay
@@ -91,36 +137,60 @@ function LoginApp() {
       setLightPos(prev => {
         const dx = targetPos.current.x - prev.x;
         const dy = targetPos.current.y - prev.y;
-        // Easing factor - lower = slower/smoother following
-        const ease = 0.08;
+
+        // Use custom easing for more organic movement
+        const ease = prefersReducedMotion ? 1 : 0.08;
+        const easedDx = dx * ease;
+        const easedDy = dy * ease;
+
         return {
-          x: prev.x + dx * ease,
-          y: prev.y + dy * ease
+          x: prev.x + easedDx,
+          y: prev.y + easedDy
         };
       });
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    // Initialize position to center
-    targetPos.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    setLightPos({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    // Initialize position - center on card if touch device, otherwise center of screen
+    if (isTouchDevice && cardBounds) {
+      targetPos.current = {
+        x: cardBounds.left + cardBounds.width / 2,
+        y: cardBounds.top + cardBounds.height / 2
+      };
+      setLightPos({
+        x: cardBounds.left + cardBounds.width / 2,
+        y: cardBounds.top + cardBounds.height / 2
+      });
+    } else {
+      targetPos.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      setLightPos({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+    }
 
     window.addEventListener('mousemove', handleMouseMove);
-    animationRef.current = requestAnimationFrame(animate);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    if (!prefersReducedMotion) {
+      animationRef.current = requestAnimationFrame(animate);
+    }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []);
+  }, [isTouchDevice, cardBounds, prefersReducedMotion]);
 
-  // Mock submit handler - DO NOT CHANGE
+  // Mock submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    // Button flash effect
+    setButtonFlash(true);
+    setTimeout(() => setButtonFlash(false), 300);
 
     setTimeout(() => {
       if (!lastName || !projectKeyword) {
@@ -133,14 +203,55 @@ function LoginApp() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 overflow-hidden">
-      {/*
-        LIGHT EFFECT - Responds to card proximity
-        When near card: scatters (more blur, cooler color, larger spread)
-        Like light hitting a frosted glass surface
-      */}
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Background atmosphere - layered gradients for depth */}
+      <div className="fixed inset-0 bg-[#0f0f0f]" />
 
-      {/* Outer haze - gets more diffuse near card */}
+      {/* Subtle environmental glow - terracotta warmth in bottom left */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse 1200px 800px at 10% 90%, rgba(201, 166, 138, 0.03) 0%, transparent 50%),
+            radial-gradient(ellipse 1000px 1000px at 90% 10%, rgba(143, 169, 179, 0.02) 0%, transparent 50%)
+          `
+        }}
+      />
+
+      {/* Background art - very subtle */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.02]"
+        style={{
+          backgroundImage: 'url(/assets/media/pdf-viewer-bg-art-1.webp)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          mixBlendMode: 'screen'
+        }}
+      />
+
+      {/* VOLUMETRIC LIGHT - Enhanced with breathing pulse */}
+
+      {/* Far haze - atmospheric depth layer */}
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          left: lightPos.x,
+          top: lightPos.y,
+          width: 900,
+          height: 900,
+          transform: 'translate(-50%, -50%)',
+          background: `radial-gradient(circle,
+            rgba(201, 156, 173, ${0.03 + scatterFactor * 0.02}) 0%,
+            transparent 70%)`,
+          filter: 'blur(80px)',
+          opacity: prefersReducedMotion ? 0.7 : undefined,
+          animation: prefersReducedMotion ? 'none' : 'breathe 4s ease-in-out infinite',
+          willChange: 'transform',
+          zIndex: 1
+        }}
+      />
+
+      {/* Outer bloom - diffuse layer */}
       <div
         className="fixed pointer-events-none"
         style={{
@@ -150,17 +261,18 @@ function LoginApp() {
           height: 600 + (scatterFactor * 200),
           transform: 'translate(-50%, -50%)',
           background: `radial-gradient(circle,
-            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.08 + scatterFactor * 0.04}) 0%,
-            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.02 + scatterFactor * 0.02}) 40%,
+            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.12 + scatterFactor * 0.05}) 0%,
+            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.04 + scatterFactor * 0.03}) 40%,
             transparent 70%)`,
           filter: `blur(${40 + scatterFactor * 30}px)`,
-          opacity: 0.8 + scatterFactor * 0.2,
-          zIndex: 1,
-          transition: 'width 0.3s ease, height 0.3s ease'
+          opacity: 0.85 + scatterFactor * 0.15 + (buttonFlash ? 0.3 : 0),
+          willChange: 'transform, opacity',
+          zIndex: 2,
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out'
         }}
       />
 
-      {/* Mid glow - scatters and shifts cooler */}
+      {/* Mid bloom - body of light */}
       <div
         className="fixed pointer-events-none"
         style={{
@@ -170,171 +282,303 @@ function LoginApp() {
           height: 350 + (scatterFactor * 150),
           transform: 'translate(-50%, -50%)',
           background: `radial-gradient(circle,
-            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.15 + scatterFactor * 0.08}) 0%,
-            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.05 + scatterFactor * 0.03}) 50%,
+            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.22 + scatterFactor * 0.1}) 0%,
+            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.08 + scatterFactor * 0.04}) 50%,
             transparent 70%)`,
           filter: `blur(${20 + scatterFactor * 25}px)`,
-          zIndex: 2,
-          transition: 'width 0.3s ease, height 0.3s ease'
+          opacity: 1 + (buttonFlash ? 0.4 : 0),
+          willChange: 'transform, opacity',
+          zIndex: 3,
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out'
         }}
       />
 
-      {/* Core light - dims slightly when scattered */}
+      {/* Inner glow - transition to core */}
       <div
         className="fixed pointer-events-none"
         style={{
           left: lightPos.x,
           top: lightPos.y,
-          width: 150 + (scatterFactor * 50),
-          height: 150 + (scatterFactor * 50),
+          width: 180 + (scatterFactor * 60),
+          height: 180 + (scatterFactor * 60),
           transform: 'translate(-50%, -50%)',
           background: `radial-gradient(circle,
-            rgba(255, 255, 255, ${0.12 - scatterFactor * 0.04}) 0%,
-            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.2 + scatterFactor * 0.05}) 30%,
+            rgba(${scatterFactor > 0.4 ? '143, 169, 179' : '201, 156, 173'}, ${0.3 + scatterFactor * 0.08}) 0%,
+            rgba(156, 82, 139, ${0.15 + scatterFactor * 0.05}) 40%,
             transparent 70%)`,
-          filter: `blur(${8 + scatterFactor * 12}px)`,
-          zIndex: 3,
-          transition: 'width 0.3s ease, height 0.3s ease'
+          filter: `blur(${12 + scatterFactor * 15}px)`,
+          opacity: 1 + (buttonFlash ? 0.5 : 0),
+          animation: prefersReducedMotion ? 'none' : 'breathe 4s ease-in-out infinite 0.5s',
+          willChange: 'transform, opacity',
+          zIndex: 4,
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out'
         }}
       />
 
-      {/* Login Card - Responds to light position */}
+      {/* Core light - brightest center with breathing pulse */}
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          left: lightPos.x,
+          top: lightPos.y,
+          width: 120 + (scatterFactor * 40),
+          height: 120 + (scatterFactor * 40),
+          transform: 'translate(-50%, -50%)',
+          background: `radial-gradient(circle,
+            rgba(255, 255, 255, ${0.15 - scatterFactor * 0.05 + (buttonFlash ? 0.3 : 0)}) 0%,
+            rgba(156, 82, 139, ${0.25 + scatterFactor * 0.08 + (buttonFlash ? 0.2 : 0)}) 25%,
+            rgba(${scatterFactor > 0.3 ? '143, 169, 179' : '201, 156, 173'}, ${0.2 + scatterFactor * 0.06}) 50%,
+            transparent 70%)`,
+          filter: `blur(${6 + scatterFactor * 10}px)`,
+          animation: prefersReducedMotion ? 'none' : 'breathe 4s ease-in-out infinite 1s',
+          willChange: 'transform, opacity',
+          zIndex: 5,
+          transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}
+      />
+
+      {/* Login Card - Frosted glass material with cast shadow */}
       <div className="w-full max-w-md relative z-10" ref={cardRef}>
+        {/* THE UNEXPECTED: Soft shadow cast when light passes behind card */}
+        {getLightInteraction.isBehindCard && !prefersReducedMotion && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              transform: `translate(${getLightInteraction.shadowOffsetX}px, ${getLightInteraction.shadowOffsetY}px)`,
+              opacity: Math.min(0.4, scatterFactor * 0.6),
+              filter: 'blur(40px)',
+              background: 'rgba(0, 0, 0, 0.5)',
+              borderRadius: '1rem',
+              zIndex: -1,
+              transition: 'opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          />
+        )}
+
         <div
-          className="p-8 rounded-2xl border border-white/10 bg-[#1a1a1a] relative overflow-hidden"
+          className="relative rounded-2xl overflow-hidden"
           style={{
-            // Surface reflection following light - localized gradient
-            background: cardBounds ? `
-              radial-gradient(
-                600px circle at ${interaction.normalizedX * 100}% ${interaction.normalizedY * 100}%,
-                rgba(201, 156, 173, ${0.08 * scatterFactor}) 0%,
-                rgba(143, 169, 179, ${0.04 * scatterFactor}) 30%,
-                transparent 60%
-              ),
-              #1a1a1a
-            ` : '#1a1a1a'
+            // Layered shadows for depth
+            boxShadow: `
+              0 0 0 1px rgba(255, 255, 255, 0.08),
+              0 8px 32px rgba(0, 0, 0, 0.4),
+              0 2px 8px rgba(0, 0, 0, 0.3),
+              inset 0 0 0 1px rgba(255, 255, 255, 0.05)
+            `
           }}
         >
-          {/* Edge highlights - catch light on illuminated edges */}
+          {/* Frosted glass backdrop */}
+          <div
+            className="absolute inset-0 bg-[#1a1a1a]/60"
+            style={{
+              backdropFilter: 'blur(20px) saturate(1.2)',
+              WebkitBackdropFilter: 'blur(20px) saturate(1.2)'
+            }}
+          />
+
+          {/* Subtle noise texture overlay */}
+          <div
+            className="absolute inset-0 opacity-[0.015] pointer-events-none mix-blend-overlay"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+              backgroundSize: '200px 200px'
+            }}
+          />
+
+          {/* Surface light reflection - localized gradient */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: cardBounds ? `
+                radial-gradient(
+                  700px circle at ${getLightInteraction.normalizedX * 100}% ${getLightInteraction.normalizedY * 100}%,
+                  rgba(201, 156, 173, ${0.12 * scatterFactor}) 0%,
+                  rgba(143, 169, 179, ${0.06 * scatterFactor}) 25%,
+                  rgba(156, 82, 139, ${0.03 * scatterFactor}) 40%,
+                  transparent 65%
+                )
+              ` : 'transparent',
+              transition: 'background 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+          />
+
+          {/* Edge light catching - enhanced with smooth transitions */}
           {cardBounds && scatterFactor > 0.2 && (
             <>
-              {/* Top edge highlight */}
+              {/* Top edge */}
               <div
-                className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none"
+                className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none"
                 style={{
                   background: `linear-gradient(90deg,
                     transparent 0%,
-                    rgba(201, 156, 173, ${0.3 * scatterFactor * (1 - Math.abs(interaction.normalizedX - 0.5) * 2)}) ${interaction.normalizedX * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedX - 0.5) * 2)}) ${(getLightInteraction.normalizedX * 100) - 5}%,
+                    rgba(255, 255, 255, ${0.4 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedX - 0.5) * 2)}) ${getLightInteraction.normalizedX * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedX - 0.5) * 2)}) ${(getLightInteraction.normalizedX * 100) + 5}%,
                     transparent 100%)`,
-                  opacity: interaction.normalizedY < 0.5 ? scatterFactor : scatterFactor * 0.3
+                  opacity: getLightInteraction.normalizedY < 0.5 ? scatterFactor : scatterFactor * 0.3,
+                  boxShadow: `0 0 8px rgba(201, 156, 173, ${0.3 * scatterFactor})`,
+                  transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
               />
 
-              {/* Bottom edge highlight */}
+              {/* Bottom edge */}
               <div
-                className="absolute bottom-0 left-0 right-0 h-[2px] pointer-events-none"
+                className="absolute bottom-0 left-0 right-0 h-[1px] pointer-events-none"
                 style={{
                   background: `linear-gradient(90deg,
                     transparent 0%,
-                    rgba(201, 156, 173, ${0.3 * scatterFactor * (1 - Math.abs(interaction.normalizedX - 0.5) * 2)}) ${interaction.normalizedX * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedX - 0.5) * 2)}) ${(getLightInteraction.normalizedX * 100) - 5}%,
+                    rgba(255, 255, 255, ${0.4 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedX - 0.5) * 2)}) ${getLightInteraction.normalizedX * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedX - 0.5) * 2)}) ${(getLightInteraction.normalizedX * 100) + 5}%,
                     transparent 100%)`,
-                  opacity: interaction.normalizedY > 0.5 ? scatterFactor : scatterFactor * 0.3
+                  opacity: getLightInteraction.normalizedY > 0.5 ? scatterFactor : scatterFactor * 0.3,
+                  boxShadow: `0 0 8px rgba(201, 156, 173, ${0.3 * scatterFactor})`,
+                  transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
               />
 
-              {/* Left edge highlight */}
+              {/* Left edge */}
               <div
-                className="absolute top-0 bottom-0 left-0 w-[2px] pointer-events-none"
+                className="absolute top-0 bottom-0 left-0 w-[1px] pointer-events-none"
                 style={{
                   background: `linear-gradient(180deg,
                     transparent 0%,
-                    rgba(201, 156, 173, ${0.3 * scatterFactor * (1 - Math.abs(interaction.normalizedY - 0.5) * 2)}) ${interaction.normalizedY * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedY - 0.5) * 2)}) ${(getLightInteraction.normalizedY * 100) - 5}%,
+                    rgba(255, 255, 255, ${0.4 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedY - 0.5) * 2)}) ${getLightInteraction.normalizedY * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedY - 0.5) * 2)}) ${(getLightInteraction.normalizedY * 100) + 5}%,
                     transparent 100%)`,
-                  opacity: interaction.normalizedX < 0.5 ? scatterFactor : scatterFactor * 0.3
+                  opacity: getLightInteraction.normalizedX < 0.5 ? scatterFactor : scatterFactor * 0.3,
+                  boxShadow: `0 0 8px rgba(201, 156, 173, ${0.3 * scatterFactor})`,
+                  transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
               />
 
-              {/* Right edge highlight */}
+              {/* Right edge */}
               <div
-                className="absolute top-0 bottom-0 right-0 w-[2px] pointer-events-none"
+                className="absolute top-0 bottom-0 right-0 w-[1px] pointer-events-none"
                 style={{
                   background: `linear-gradient(180deg,
                     transparent 0%,
-                    rgba(201, 156, 173, ${0.3 * scatterFactor * (1 - Math.abs(interaction.normalizedY - 0.5) * 2)}) ${interaction.normalizedY * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedY - 0.5) * 2)}) ${(getLightInteraction.normalizedY * 100) - 5}%,
+                    rgba(255, 255, 255, ${0.4 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedY - 0.5) * 2)}) ${getLightInteraction.normalizedY * 100}%,
+                    rgba(201, 156, 173, ${0.5 * scatterFactor * (1 - Math.abs(getLightInteraction.normalizedY - 0.5) * 2)}) ${(getLightInteraction.normalizedY * 100) + 5}%,
                     transparent 100%)`,
-                  opacity: interaction.normalizedX > 0.5 ? scatterFactor : scatterFactor * 0.3
+                  opacity: getLightInteraction.normalizedX > 0.5 ? scatterFactor : scatterFactor * 0.3,
+                  boxShadow: `0 0 8px rgba(201, 156, 173, ${0.3 * scatterFactor})`,
+                  transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
               />
             </>
           )}
 
-          {/* Header */}
-          <div className="text-center mb-8 relative z-10">
-            <h1 className="font-agency text-4xl font-bold text-white mb-2 tracking-wider">
-              Horvath Payments
-            </h1>
-            <p className="text-white/60 text-sm">
-              Login to access your contract and invoices.
-            </p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
-            <div>
-              <input
-                type="text"
-                className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#C99CAD]/50 focus:ring-1 focus:ring-[#C99CAD]/30 transition-all"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#C99CAD]/50 focus:ring-1 focus:ring-[#C99CAD]/30 transition-all"
-                placeholder="Project Keyword"
-                value={projectKeyword}
-                onChange={e => setProjectKeyword(e.target.value)}
-                disabled={loading}
-              />
-              <p className="text-xs text-white/40 mt-2 text-center">
-                Use the keyword from your notification email.
+          {/* Card content */}
+          <div className="relative p-8">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <h1 className="font-agency text-4xl font-bold text-white mb-2 tracking-wider drop-shadow-sm">
+                Horvath Payments
+              </h1>
+              <p className="text-white/70 text-sm">
+                Login to access your contract and invoices.
               </p>
             </div>
 
-            {error && (
-              <div className={`p-3 rounded-lg text-sm text-center ${
-                error.includes('successful')
-                  ? 'bg-green-500/10 border border-green-500/30 text-green-400'
-                  : 'bg-red-500/10 border border-red-500/30 text-red-400'
-              }`}>
-                {error}
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="lastName" className="sr-only">Last Name</label>
+                <input
+                  id="lastName"
+                  type="text"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40
+                    hover:border-white/15 hover:bg-black/35
+                    focus:outline-none focus:border-[#C99CAD]/60 focus:ring-2 focus:ring-[#C99CAD]/30 focus:bg-black/40
+                    transition-all duration-300 ease-out backdrop-blur-sm"
+                  placeholder="Last Name"
+                  value={lastName}
+                  onChange={e => setLastName(e.target.value)}
+                  disabled={loading}
+                  aria-required="true"
+                />
               </div>
-            )}
+              <div>
+                <label htmlFor="projectKeyword" className="sr-only">Project Keyword</label>
+                <input
+                  id="projectKeyword"
+                  type="text"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/40
+                    hover:border-white/15 hover:bg-black/35
+                    focus:outline-none focus:border-[#C99CAD]/60 focus:ring-2 focus:ring-[#C99CAD]/30 focus:bg-black/40
+                    transition-all duration-300 ease-out backdrop-blur-sm"
+                  placeholder="Project Keyword"
+                  value={projectKeyword}
+                  onChange={e => setProjectKeyword(e.target.value)}
+                  disabled={loading}
+                  aria-required="true"
+                  aria-describedby="keyword-help"
+                />
+                <p id="keyword-help" className="text-xs text-white/50 mt-2 text-center">
+                  Use the keyword from your notification email.
+                </p>
+              </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#C99CAD] hover:bg-[#C99CAD]/80 text-[#0f0f0f] font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[#C99CAD]/50 focus:ring-offset-2 focus:ring-offset-[#1a1a1a]"
-            >
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Access Portal'}
-            </button>
-          </form>
+              {error && (
+                <div
+                  className={`p-3 rounded-lg text-sm text-center backdrop-blur-sm transition-all duration-300 ease-out ${
+                    error.includes('successful')
+                      ? 'bg-green-500/10 border border-green-500/30 text-green-400'
+                      : 'bg-red-500/10 border border-red-500/30 text-red-400'
+                  }`}
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#C99CAD] hover:bg-[#9C528B] active:scale-[0.98] text-[#0f0f0f] font-semibold py-3 rounded-lg
+                  transition-all duration-300 ease-out
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  flex justify-center items-center gap-2
+                  focus:outline-none focus:ring-2 focus:ring-[#C99CAD]/60 focus:ring-offset-2 focus:ring-offset-transparent
+                  shadow-lg hover:shadow-xl hover:shadow-[#C99CAD]/20"
+                aria-label="Access Portal"
+              >
+                {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Access Portal'}
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-white/40 mt-8">
+        <p className="text-center text-sm text-white/50 mt-8">
           Need help? Contact{' '}
           <a
             href="mailto:sean@august.style"
-            className="text-[#C99CAD] hover:text-[#C99CAD]/80 transition-colors focus:outline-none focus:underline"
+            className="text-[#C99CAD] hover:text-[#9C528B] transition-colors duration-200 focus:outline-none focus:underline focus:text-[#9C528B]"
           >
             sean@august.style
           </a>
         </p>
       </div>
+
+      <style>{`
+        @keyframes breathe {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

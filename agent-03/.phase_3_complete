@@ -1,0 +1,38 @@
+Phase 3: Material - Complete
+
+Material concept: Frosted glass in atmospheric mauve-pink space
+
+CARD MATERIAL - Frosted Glass:
+- Semi-transparent background with backdrop-filter blur
+- Multi-layer shadows for depth (outer shadow + inset highlights)
+- Gradient border with mauve/pink tint
+- Surface refraction effect (::before) - mauve-pink glow follows light
+- Edge brightening (::after) - rim light where light hits surface
+- Mix-blend-mode: screen for natural light interaction
+
+LIGHT CHARACTER - Mauve-Pink Bloom:
+- Three-layer light source for depth:
+  * Outer bloom (500px) - Mauve (#C99CAD) atmospheric spread
+  * Mid bloom (280px) - Deep Pink (#9C528B) undertone
+  * Inner core (120px) - White-to-mauve-to-pink gradient
+- Larger, softer than Phase 2 (250px offset vs 200px)
+- Color shifts with intensity
+- Soft glow shadow on core when near card
+
+BACKGROUND ATMOSPHERE:
+- Radial gradient: subtle mauve tint (#1a1315) to deep black
+- Art asset overlay at 3% opacity with blur and overlay blend
+- Supports light and card without competing
+
+FORM STYLING:
+- Inputs: Frosted dark glass with mauve borders
+- Focus states: Mauve glow ring, enhanced border
+- Button: Mauve-to-pink gradient glass with depth shadows
+- Hover/active states with subtle transforms
+
+COHESION:
+- Mauve (#C99CAD) as primary light/accent color
+- Deep Pink (#9C528B) as secondary depth color
+- Restrained palette - only two colors from spec used
+- All materials share glass/translucency language
+- Phase 2 interaction physics preserved and enhanced

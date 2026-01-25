@@ -1,0 +1,75 @@
+Phase 3: Material - Complete
+
+Agent-02 Volumetric Light & Frosted Glass
+
+LIGHT CHARACTER - Volumetric bloom with depth
+5 concentric bloom layers for atmospheric depth:
+1. Far haze (900px, blur 80px) - atmospheric presence
+2. Outer bloom (600-800px, blur 40-70px) - diffuse aura
+3. Mid bloom (350-500px, blur 20-45px) - body/mass of light
+4. Inner glow (180-240px, blur 12-27px) - transition to core
+5. Core (120-160px, blur 6-16px) - intense center
+
+Color progression by distance:
+- Distant: Warm mauve (#C99CAD)
+- Near card (scatter): Cool blue (#8FA9B3)
+- Core accent: Deep pink (#9C528B) + white hot center
+- Each layer intensifies as light nears card
+
+CARD MATERIAL - Frosted translucent glass
+- Backdrop filter: blur(20px) + saturation boost
+- Layered box shadows: outer glow, depth shadows, inset rim light
+- Subtle noise texture overlay (SVG fractal noise, mix-blend-overlay)
+- Semi-transparent background (#1a1a1a at 60%)
+- Surface feels like etched/frosted glass
+
+Material optical properties:
+- Surface reflection gradient follows light position
+- Uses all 3 palette colors in gradient (mauve → blue → pink)
+- Edge highlights with bloom/glow (box-shadow on 1px lines)
+- Enhanced brightness at peak with white center point
+- Gradual falloff creates soft catch-light effect
+
+BACKGROUND ATMOSPHERE - Layered environmental depth
+1. Base: Pure black (#0f0f0f)
+2. Environmental glows:
+   - Terracotta warmth (bottom-left corner, 3% opacity)
+   - Blue coolness (top-right corner, 2% opacity)
+3. Background art asset (pdf-viewer-bg-art-1.webp)
+   - Screen blend mode, 2% opacity
+   - Adds subtle texture without competing
+
+VISUAL COHESION
+Palette discipline:
+- Mauve: Primary light, warmth, dominant presence
+- Blue: Scatter state, material reflections, coolness
+- Deep Pink: Core intensity, accent notes
+- Terracotta: Environmental warmth only (not on light/card)
+
+Material-light consistency:
+- Glass scatters light (color shift warm→cool)
+- Glass edges catch light (bright linear highlights)
+- Glass surface reflects (localized radial gradient)
+- All effects respond to same proximity calculation
+
+Restraint choices:
+- Only 1 background art asset (not all 3)
+- Environmental glows very subtle (2-3%)
+- Noise texture barely visible (1.5%)
+- No arbitrary effects - every layer serves the concept
+- Form fields semi-transparent to show material depth
+
+INTERACTION PRESERVED
+Phase 2 physics still intact:
+- Distance-based scattering (400px threshold)
+- Localized edge highlights (normalized coordinates)
+- Directional opacity (which edge faces light)
+- Surface reflection gradient follows cursor
+- All effects smooth 60fps
+
+ENHANCED DETAILS
+- Button hover: mauve → deep pink transition
+- Input focus: backdrop blur, deeper background
+- Edge highlights: added box-shadow glow
+- Text: drop-shadow for depth
+- All transitions: 300ms duration for smoothness

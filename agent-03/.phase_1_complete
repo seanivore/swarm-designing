@@ -1,0 +1,10 @@
+Phase 1: Foundation - Complete
+
+Light concept: Atmospheric spotlight with layered bloom
+- Outer bloom: 400px soft glow with blur
+- Inner core: 120px brighter center point
+- Smooth lerp interpolation for fluid movement
+- Reduced motion support
+- GPU-accelerated transforms
+
+Card: Basic structure, functional inputs, dark background

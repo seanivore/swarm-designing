@@ -1,0 +1,42 @@
+Phase 2: Interaction - Complete
+
+Agent-02 Light-Material Physics
+
+LIGHT RESPONDS TO CARD:
+- Distance calculation from light to card center
+- Scatter factor: 0-1 based on proximity (400px threshold)
+- When near card:
+  * Light spreads larger (up to +200px outer haze)
+  * Color shifts cooler (mauve → blue, like wavelength absorption)
+  * Blur increases (scattering through material)
+  * Core dims slightly (energy dispersed)
+- Smooth transitions with CSS ease
+
+CARD RESPONDS TO LIGHT:
+- Surface reflection: Radial gradient follows normalized light position
+- Edge highlights: 4 independent edge glows (top, bottom, left, right)
+  * Intensity peaks where light is closest
+  * Calculated using normalized X/Y position (0-1)
+  * Only visible when scatter factor > 0.2
+  * Opacity varies by which side faces the light
+- All effects are LOCALIZED, not whole-card glow
+
+INTERACTION DETAILS:
+- Uses actual geometric distance, not hover state
+- Card bounds tracked via ref + getBoundingClientRect
+- Normalized coordinates (0-1) for precise light-to-surface mapping
+- Edge highlights use gradient peaks at light position
+- All calculations in render loop (60fps)
+
+FOCUS STATES ADDED:
+- Input fields: mauve border + ring on focus
+- Button: ring with offset
+- Link: underline on focus
+- All keyboard accessible
+
+WHY IT FEELS LIKE PHYSICS:
+- Light changes before touching card (proximity field)
+- Color temperature shift (material absorption)
+- Directional edge highlights (localized illumination)
+- Surface reflection follows actual light position
+- Not a binary on/off - gradual intensity based on distance

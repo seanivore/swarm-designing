@@ -231,7 +231,7 @@ body {
 }
 
 /* ============================================
-   PHASE 1: CURSOR-FOLLOWING LIGHT
+   PHASE 1 & 2: CURSOR-FOLLOWING LIGHT
    ============================================ */
 
 .light-source {
@@ -247,6 +247,8 @@ body {
   margin-top: -200px;
   /* Fade transition */
   transition: opacity 0.4s ease-out;
+  /* PHASE 2: Dynamic intensity */
+  --light-intensity: 1;
 }
 
 /* Outer bloom - soft, wide atmospheric glow */
@@ -257,9 +259,9 @@ body {
   border-radius: 50%;
   background: radial-gradient(
     circle at center,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.01) 50%,
+    rgba(255, 255, 255, calc(0.08 * var(--light-intensity))) 0%,
+    rgba(255, 255, 255, calc(0.04 * var(--light-intensity))) 25%,
+    rgba(255, 255, 255, calc(0.01 * var(--light-intensity))) 50%,
     transparent 70%
   );
   filter: blur(30px);
@@ -277,10 +279,65 @@ body {
   border-radius: 50%;
   background: radial-gradient(
     circle at center,
-    rgba(255, 255, 255, 0.15) 0%,
-    rgba(255, 255, 255, 0.08) 30%,
-    rgba(255, 255, 255, 0.02) 60%,
+    rgba(255, 255, 255, calc(0.15 * var(--light-intensity))) 0%,
+    rgba(255, 255, 255, calc(0.08 * var(--light-intensity))) 30%,
+    rgba(255, 255, 255, calc(0.02 * var(--light-intensity))) 60%,
     transparent 100%
   );
   filter: blur(10px);
+  /* Subtle warm shift when near card */
+  box-shadow: 0 0 40px rgba(255, 255, 240, calc(0.1 * (var(--light-intensity) - 1)));
+}
+
+/* ============================================
+   PHASE 2: CARD LIGHT INTERACTION
+   ============================================ */
+
+.card-with-light {
+  position: relative;
+  --edge-x: 50%;
+  --edge-y: 50%;
+  --edge-intensity: 0;
+}
+
+/* Localized edge lighting - follows light position */
+.card-with-light::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    400px circle at var(--edge-x) var(--edge-y),
+    rgba(255, 255, 255, calc(0.15 * var(--edge-intensity))) 0%,
+    rgba(255, 255, 255, calc(0.05 * var(--edge-intensity))) 30%,
+    transparent 60%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Edge highlight on border */
+.card-with-light::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(
+    300px circle at var(--edge-x) var(--edge-y),
+    rgba(255, 255, 255, calc(0.3 * var(--edge-intensity))) 0%,
+    transparent 50%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 1px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Ensure form elements stay above the effects */
+.card-with-light > * {
+  position: relative;
+  z-index: 3;
 }

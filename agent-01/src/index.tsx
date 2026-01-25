@@ -69,9 +69,31 @@ function LoginApp() {
   const targetPos = useRef({ x: 0, y: 0 });
   const currentPos = useRef({ x: 0, y: 0 });
 
+  // ============================================
+  // PHASE 2: Light-card interaction
+  // ============================================
+
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardBounds, setCardBounds] = useState<DOMRect | null>(null);
+  const [lightIntensity, setLightIntensity] = useState(1);
+  const [cardLightPos, setCardLightPos] = useState({ x: 0, y: 0, distance: 1000 });
+
   // Check for reduced motion preference
   const prefersReducedMotion = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Update card bounds on mount and resize
+  useEffect(() => {
+    const updateCardBounds = () => {
+      if (cardRef.current) {
+        setCardBounds(cardRef.current.getBoundingClientRect());
+      }
+    };
+
+    updateCardBounds();
+    window.addEventListener('resize', updateCardBounds);
+    return () => window.removeEventListener('resize', updateCardBounds);
+  }, []);
 
   useEffect(() => {
     // Initialize position to center
@@ -95,6 +117,32 @@ function LoginApp() {
       }
 
       setMousePos({ x: currentPos.current.x, y: currentPos.current.y });
+
+      // PHASE 2: Calculate distance from light to card
+      if (cardBounds) {
+        const cardCenterX = cardBounds.left + cardBounds.width / 2;
+        const cardCenterY = cardBounds.top + cardBounds.height / 2;
+
+        const dx = currentPos.current.x - cardCenterX;
+        const dy = currentPos.current.y - cardCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Light intensifies as it gets closer to card (within 400px)
+        const maxDistance = 400;
+        const intensity = Math.max(0, 1 - distance / maxDistance);
+        setLightIntensity(intensity);
+
+        // Calculate relative position for card's localized lighting
+        const relativeX = (currentPos.current.x - cardBounds.left) / cardBounds.width;
+        const relativeY = (currentPos.current.y - cardBounds.top) / cardBounds.height;
+
+        setCardLightPos({
+          x: relativeX,
+          y: relativeY,
+          distance
+        });
+      }
+
       rafRef.current = requestAnimationFrame(animate);
     };
 
@@ -105,34 +153,34 @@ function LoginApp() {
       window.removeEventListener('mousemove', handleMouseMove);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [prefersReducedMotion]);
+  }, [prefersReducedMotion, cardBounds]);
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Light source - multiple layers for depth */}
+      {/* Light source - responds to card proximity */}
       <div
         ref={lightRef}
         className="pointer-events-none fixed inset-0"
         style={{
           background: `
             radial-gradient(
-              600px circle at ${mousePos.x}px ${mousePos.y}px,
-              rgba(201, 156, 173, 0.15),
-              rgba(201, 156, 173, 0.05) 40%,
+              ${600 - lightIntensity * 100}px circle at ${mousePos.x}px ${mousePos.y}px,
+              rgba(201, 156, 173, ${0.15 + lightIntensity * 0.12}),
+              rgba(201, 156, 173, ${0.05 + lightIntensity * 0.08}) 40%,
               transparent 70%
             )
           `,
         }}
       />
-      {/* Inner glow - brighter core */}
+      {/* Inner glow - intensifies near card */}
       <div
         className="pointer-events-none fixed inset-0"
         style={{
           background: `
             radial-gradient(
-              200px circle at ${mousePos.x}px ${mousePos.y}px,
-              rgba(255, 255, 255, 0.08),
-              rgba(201, 156, 173, 0.04) 50%,
+              ${200 - lightIntensity * 50}px circle at ${mousePos.x}px ${mousePos.y}px,
+              rgba(255, 255, 255, ${0.08 + lightIntensity * 0.15}),
+              rgba(201, 156, 173, ${0.04 + lightIntensity * 0.08}) 50%,
               transparent 100%
             )
           `,
@@ -141,7 +189,45 @@ function LoginApp() {
 
       {/* Login Card */}
       <div className="w-full max-w-md relative z-10">
-        <div className="p-8 rounded-2xl border border-white/10 bg-[#1f1f1f]">
+        <div
+          ref={cardRef}
+          className="p-8 rounded-2xl border border-white/10 bg-[#1f1f1f] relative overflow-hidden"
+          style={{
+            boxShadow: `
+              ${(cardLightPos.x - 0.5) * -20}px
+              ${(cardLightPos.y - 0.5) * -20}px
+              60px
+              rgba(0, 0, 0, ${0.3 + lightIntensity * 0.4})
+            `
+          }}
+        >
+          {/* Localized edge lighting - follows cursor position */}
+          <div
+            className="absolute inset-0 rounded-2xl pointer-events-none"
+            style={{
+              background: `
+                radial-gradient(
+                  400px circle at ${cardLightPos.x * 100}% ${cardLightPos.y * 100}%,
+                  rgba(201, 156, 173, ${lightIntensity * 0.3}),
+                  rgba(201, 156, 173, ${lightIntensity * 0.1}) 30%,
+                  transparent 60%
+                )
+              `,
+            }}
+          />
+          {/* Surface reflection - bright spot where light hits */}
+          <div
+            className="absolute inset-0 rounded-2xl pointer-events-none"
+            style={{
+              background: `
+                radial-gradient(
+                  150px circle at ${cardLightPos.x * 100}% ${cardLightPos.y * 100}%,
+                  rgba(255, 255, 255, ${lightIntensity * 0.15}),
+                  transparent 50%
+                )
+              `,
+            }}
+          />
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="font-agency text-4xl font-bold text-white mb-2 tracking-wider">
@@ -153,11 +239,11 @@ function LoginApp() {
           </div>
 
           {/* Form - Keep structure, style freely */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             <div>
-              <input 
-                type="text" 
-                className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30"
+              <input
+                type="text"
+                className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 transition-all duration-200 focus:outline-none focus:border-[#C99CAD]/50 focus:ring-2 focus:ring-[#C99CAD]/20"
                 placeholder="Last Name"
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
@@ -165,9 +251,9 @@ function LoginApp() {
               />
             </div>
             <div>
-              <input 
-                type="text" 
-                className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30"
+              <input
+                type="text"
+                className="w-full bg-[#0f0f0f] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 transition-all duration-200 focus:outline-none focus:border-[#C99CAD]/50 focus:ring-2 focus:ring-[#C99CAD]/20"
                 placeholder="Project Keyword"
                 value={projectKeyword}
                 onChange={e => setProjectKeyword(e.target.value)}

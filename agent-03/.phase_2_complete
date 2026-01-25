@@ -1,0 +1,25 @@
+Phase 2: Interaction - Complete
+
+Physical light-card interaction:
+
+Light behavior:
+- Intensifies 1.0x → 1.8x when within 300px of card center
+- Subtle warm glow added when near surface (not decorative, physical)
+- Distance-based calculation, not hover detection
+
+Card response:
+- Localized edge lighting via ::before pseudo-element
+- Edge highlight on border via ::after pseudo-element
+- Both follow exact light position using radial gradients
+- Intensity fades with distance (0 → 1 based on proximity)
+
+Physics feel:
+- Real-time distance calculations in RAF loop
+- Light position converted to card-relative coordinates
+- Smooth intensity transitions
+- No discrete hover states - continuous interaction
+
+Performance:
+- All calculations in existing RAF loop
+- CSS custom properties for dynamic values
+- GPU-accelerated transforms maintained

@@ -4,11 +4,13 @@ import { Loader2 } from 'lucide-react';
 import './index.css';
 
 /**
- * PHASE 1: Foundation
- * Light follows cursor. Card exists. Nothing else.
+ * PHASE 2: Interaction
+ * Light and card respond to each other physically.
  *
- * Light concept: Atmospheric spotlight with soft bloom.
- * Not a glow effect - a light source illuminating space.
+ * Interaction concept:
+ * - Light intensifies when near card (like hitting a surface)
+ * - Card edges brighten on the side closest to light
+ * - Distance-based, not hover-based
  */
 
 function LoginApp() {
@@ -23,6 +25,11 @@ function LoginApp() {
   const rafRef = useRef<number | null>(null);
   const targetRef = useRef({ x: 0, y: 0 });
   const currentRef = useRef({ x: 0, y: 0 });
+
+  // Card interaction state
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [lightIntensity, setLightIntensity] = useState(1);
+  const [cardEdgeLight, setCardEdgeLight] = useState({ x: 50, y: 50, intensity: 0 });
 
   // Smooth cursor tracking with lerp for 60fps performance
   useEffect(() => {
@@ -45,6 +52,35 @@ function LoginApp() {
         x: currentRef.current.x,
         y: currentRef.current.y
       });
+
+      // PHASE 2: Calculate light-card interaction
+      if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        const cardCenterX = rect.left + rect.width / 2;
+        const cardCenterY = rect.top + rect.height / 2;
+
+        // Distance from light to card center
+        const dx = currentRef.current.x - cardCenterX;
+        const dy = currentRef.current.y - cardCenterY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Proximity threshold (light starts interacting within 300px)
+        const maxDistance = 300;
+        const proximity = Math.max(0, 1 - distance / maxDistance);
+
+        // Light intensifies when near card (1.0 to 1.8)
+        setLightIntensity(1 + proximity * 0.8);
+
+        // Card edge lighting - position relative to card
+        const relativeX = ((currentRef.current.x - rect.left) / rect.width) * 100;
+        const relativeY = ((currentRef.current.y - rect.top) / rect.height) * 100;
+
+        setCardEdgeLight({
+          x: Math.max(0, Math.min(100, relativeX)),
+          y: Math.max(0, Math.min(100, relativeY)),
+          intensity: proximity
+        });
+      }
 
       rafRef.current = requestAnimationFrame(animate);
     };
@@ -82,14 +118,15 @@ function LoginApp() {
 
   return (
     <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center p-4 overflow-hidden relative">
-      {/* PHASE 1: Cursor-following light */}
+      {/* PHASE 2: Cursor-following light with card interaction */}
       {!prefersReducedMotion && (
         <div
           className="light-source"
           style={{
             transform: `translate(${lightPos.x}px, ${lightPos.y}px)`,
-            opacity: isActive ? 1 : 0
-          }}
+            opacity: isActive ? 1 : 0,
+            '--light-intensity': lightIntensity
+          } as React.CSSProperties}
           aria-hidden="true"
         >
           {/* Outer bloom - soft atmospheric glow */}
@@ -99,9 +136,17 @@ function LoginApp() {
         </div>
       )}
 
-      {/* Login Card */}
+      {/* Login Card - with light interaction */}
       <div className="w-full max-w-md relative z-10">
-        <div className="p-8 rounded-2xl border border-white/10 bg-[#1f1f1f]">
+        <div
+          ref={cardRef}
+          className="card-with-light p-8 rounded-2xl border border-white/10 bg-[#1f1f1f]"
+          style={{
+            '--edge-x': `${cardEdgeLight.x}%`,
+            '--edge-y': `${cardEdgeLight.y}%`,
+            '--edge-intensity': cardEdgeLight.intensity
+          } as React.CSSProperties}
+        >
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="font-agency text-4xl font-bold text-white mb-2 tracking-wider">

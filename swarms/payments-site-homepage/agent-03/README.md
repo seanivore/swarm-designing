@@ -7,7 +7,13 @@ npm install
 npm run dev
 ```
 
-Preview at http://localhost:3000
+### Preview Agents
+
+```bash
+# Run each on different ports
+cd swarms/payments-site-homepage/agent-03 && npm run dev -- --port 3003
+# etc.
+```
 
 ## The Spec
 

@@ -267,8 +267,8 @@ wait
 
 ```bash
 # Run each on different ports
-cd agent-01 && npm run dev -- --port 3001
-cd agent-02 && npm run dev -- --port 3002
+cd swarms/payments-site-homepage/agent-01 && npm run dev -- --port 3001
+cd swarms/payments-site-homepage/agent-02 && npm run dev -- --port 3002
 # etc.
 ```
 

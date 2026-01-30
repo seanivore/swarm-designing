@@ -1,0 +1,26 @@
+{
+  "id": "project-slug",
+  "title": "Project Title",
+  "date": "2024-01-01",
+  "description": "A brief description of what this swarm was trying to achieve.",
+  "workflow": "parallel_volley.md",
+  "design_spec": "aesthetic_diversity_spec.md",
+  "agents_total": 5,
+  "showcase": [
+    {
+      "agent": "agent-01",
+      "summary": "Winner: Best Navigation"
+    },
+    {
+      "agent": "agent-04",
+      "summary": "Runner-up: Creative Visuals"
+    }
+  ],
+  "tags": [
+    "ui",
+    "concept",
+    "web"
+  ],
+  "preview_image": "assets/preview.png",
+  "entry_point": "index.html"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "portfolio-concept-v1",
+  "title": "Portfolio Website Concept",
+  "date": "2026-01-29",
+  "description": "Meta-swarm to design the visual identity of the portfolio gallery itself. Concepts range from 'GoldenEye HUD' to 'Minimalist Void'.",
+  "workflow": "manual-simulation",
+  "agents": 2,
+  "tags": [
+    "ui",
+    "concept",
+    "meta",
+    "website"
+  ],
+  "featured_artifact": "agent-1/index.html"
+}

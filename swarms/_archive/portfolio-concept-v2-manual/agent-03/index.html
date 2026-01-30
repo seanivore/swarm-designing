@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OBSERVATORY // DEEP_FIELD</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at center, #1a1e2e 0%, #000 100%);
+      color: #a5b4fc;
+      font-family: 'Courier New', Courier, monospace;
+      overflow: hidden;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 4s infinite;
+    }
+
+    @keyframes twinkle {
+
+      0%,
+      100% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .orbit-line {
+      border: 1px solid rgba(165, 180, 252, 0.1);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .planet {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.3s ease;
+    }
+
+    .planet:hover {
+      transform: translate(-50%, -50%) scale(1.5);
+      z-index: 50;
+    }
+
+    .spin-slow {
+      animation: spin 60s linear infinite;
+    }
+
+    @keyframes spin {
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen relative">
+
+  <!-- UI Overlay -->
+  <div class="absolute inset-0 z-20 pointer-events-none border-[20px] border-black/80 rounded-[3rem]">
+    <!-- Crosshairs -->
+    <div class="absolute top-1/2 left-1/2 w-4 h-4 border-l border-t border-white/20 -translate-x-1/2 -translate-y-1/2">
+    </div>
+    <div class="absolute top-1/2 left-1/2 w-4 h-4 border-r border-b border-white/20 -translate-x-1/2 -translate-y-1/2">
+    </div>
+
+    <!-- Data -->
+    <div class="absolute top-8 left-8 font-xs text-indigo-300/50">
+      AZ: 142.5°<br>
+      ALT: 45.2°
+    </div>
+    <div class="absolute bottom-8 right-8 text-right font-xs text-indigo-300/50">
+      ZOOM: 2500x<br>
+      FILTER: UV
+    </div>
+  </div>
+
+  <!-- Solar System (Navigation) -->
+  <div class="orbit-line w-[600px] h-[600px] spin-slow">
+    <!-- Planet 1 -->
+    <div class="planet cursor-pointer group">
+      <div
+        class="w-8 h-8 rounded-full bg-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.5)] group-hover:bg-white transition-colors">
+      </div>
+      <div
+        class="absolute top-10 left-1/2 -translate-x-1/2 text-[10px] w-24 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+        CMY_CUBE<br><span class="text-xs text-white">Alpha Centauri</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="orbit-line w-[400px] h-[400px] spin-slow" style="animation-direction: reverse; animation-duration: 45s;">
+    <!-- Planet 2 -->
+    <div class="planet cursor-pointer group">
+      <div
+        class="w-12 h-12 rounded-full bg-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.5)] group-hover:bg-white transition-colors relative overflow-hidden">
+        <div class="absolute inset-0 border-2 border-white/20 rounded-full"></div>
+      </div>
+      <div
+        class="absolute top-14 left-1/2 -translate-x-1/2 text-[10px] w-24 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+        NEURAL<br><span class="text-xs text-white">Nebula M-42</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Central Center -->
+  <div
+    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full animate-pulse shadow-[0_0_50px_white] z-10">
+  </div>
+
+</body>
+
+</html>

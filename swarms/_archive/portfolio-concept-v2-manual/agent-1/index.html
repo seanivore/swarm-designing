@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SWARM_NET // V2.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Space Mono', monospace;
+      background-color: #0d0208;
+      color: #00ff41;
+      overflow: hidden;
+    }
+
+    /* CRT Effect */
+    .crt::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 50;
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+    }
+
+    .glow {
+      text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41;
+    }
+
+    .glow-pink {
+      color: #ff00ff;
+      text-shadow: 0 0 5px #ff00ff;
+    }
+
+    /* Custom Scrollbar */
+    .term-scroll::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    .term-scroll::-webkit-scrollbar-track {
+      background: #003300;
+      border-left: 1px solid #00ff41;
+    }
+
+    .term-scroll::-webkit-scrollbar-thumb {
+      background: #00ff41;
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen flex flex-col p-2 crt">
+
+  <!-- Top Bar -->
+  <header class="flex justify-between items-center border-b border-[#00ff41] pb-2 mb-2 bg-[#001100]">
+    <div class="flex items-center gap-4">
+      <span class="bg-[#00ff41] text-black px-2 font-bold animate-pulse">CONNECTED</span>
+      <h1 class="text-xl font-bold tracking-widest">SWARM_NET</h1>
+    </div>
+    <div class="text-xs">
+      SYS.TIME: <span id="clock">2026.01.29</span>
+    </div>
+  </header>
+
+  <div class="flex-1 flex gap-2 overflow-hidden">
+
+    <!-- Left Panel: Navigation / Terminal -->
+    <aside class="w-1/3 border border-[#00ff41] p-4 flex flex-col bg-[#000500] relative">
+      <div class="absolute top-0 right-0 p-1 text-[10px] border-l border-b border-[#00ff41] opacity-50">NAV_SYS</div>
+
+      <div class="flex-1 space-y-4">
+        <div class="group cursor-pointer">
+          <div class="text-xs opacity-50 mb-1">// SELECT_MODE</div>
+          <div
+            class="pl-4 border-l-2 border-transparent group-hover:border-[#ff00ff] group-hover:text-[#ff00ff] transition-all">
+            > BROWSE_SWARMS
+          </div>
+          <div class="pl-4 border-l-2 border-transparent group-hover:border-transparent transition-all opacity-50">
+            > EXECUTE_NEW
+          </div>
+        </div>
+
+        <div class="h-32 border border-[#003300] p-2 font-xs mt-8">
+          <div class="text-[#00ff41] opacity-50">LOGS:</div>
+          <div class="text-[10px] mt-2">
+            > SYSTEM_INIT... OK<br>
+            > LOADING_ASSETS... 45TB<br>
+            > WARN: AGENT_04 UNSTABLE<br>
+            > READY.
+          </div>
+        </div>
+      </div>
+
+      <!-- Command Line Input -->
+      <div class="mt-4 border-t border-[#00ff41] pt-2">
+        <div class="flex items-center gap-2">
+          <span class="animate-pulse">></span>
+          <input type="text"
+            class="bg-transparent border-none outline-none text-[#00ff41] w-full font-mono placeholder-[#003300]"
+            placeholder="ENTER_COMMAND" autofocus>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Panel: Data Grid -->
+    <main class="flex-1 border border-[#00ff41] p-4 term-scroll overflow-y-auto bg-[#000500] relative">
+      <div class="absolute top-0 right-0 p-1 text-[10px] border-l border-b border-[#00ff41] opacity-50">DATA_GRID</div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Swarm Card 1 -->
+        <div class="border border-[#003300] hover:border-[#ff00ff] p-2 cursor-pointer transition-colors group">
+          <div
+            class="h-32 bg-[#001100] border-b border-[#003300] mb-2 flex items-center justify-center overflow-hidden relative">
+            <div class="absolute inset-0 grid grid-cols-4 grid-rows-4 opacity-20">
+              <div class="border-r border-b border-[#00ff41]"></div>
+              <div class="border-r border-b border-[#00ff41]"></div>
+              <div class="border-r border-b border-[#00ff41]"></div>
+              <div class="border-b border-[#00ff41]"></div>
+              <div class="border-r border-b border-[#00ff41]"></div>
+              <div class="border-r border-b border-[#00ff41]"></div>
+              <div class="border-r border-b border-[#00ff41]"></div>
+              <div class="border-b border-[#00ff41]"></div>
+            </div>
+            <span
+              class="text-4xl font-bold opacity-30 group-hover:opacity-100 group-hover:text-[#ff00ff] transition-all">CMY</span>
+          </div>
+          <div class="flex justify-between items-baseline">
+            <h2 class="font-bold">CMY_CUBE</h2>
+            <span class="text-xs bg-[#003300] px-1 text-[#00ff41]">V1.0</span>
+          </div>
+          <div class="text-xs opacity-60 mt-2 font-mono">
+            UID: 0x829A<br>
+            AGENTS: 05<br>
+            STATUS: ARCHIVED
+          </div>
+        </div>
+
+        <!-- Swarm Card 2 -->
+        <div class="border border-[#003300] hover:border-[#ff00ff] p-2 cursor-pointer transition-colors group">
+          <div class="h-32 bg-[#001100] border-b border-[#003300] mb-2 flex items-center justify-center">
+            <div class="w-16 h-16 border border-[#ff00ff] rounded-full animate-spin"></div>
+          </div>
+          <div class="flex justify-between items-baseline">
+            <h2 class="font-bold glow-pink">PORTFOLIO_V2</h2>
+            <span class="text-xs bg-[#330033] px-1 text-[#ff00ff]">RUNNING</span>
+          </div>
+          <div class="text-xs opacity-60 mt-2 font-mono">
+            UID: 0x99B2<br>
+            AGENTS: 02<br>
+            STATUS: GENERATING...
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</body>
+
+</html>

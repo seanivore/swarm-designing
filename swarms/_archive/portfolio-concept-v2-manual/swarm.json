@@ -1,0 +1,43 @@
+{
+  "id": "portfolio-concept-v2",
+  "title": "Portfolio Concept V2 (The Grand Spec)",
+  "date": "2026-01-29",
+  "description": "Meta-swarm using the Aesthetic Diversity Spec. Generated 6 distinct lineages to test the range of the future platform.",
+  "workflow": "aesthetic-diversity-simulation",
+  "design_spec": "aesthetic_diversity_spec.md",
+  "agents_total": 6,
+  "showcase": [
+    {
+      "agent": "agent-01",
+      "summary": "Cyber-Noir A (Terminal): Pure data, monospaced, command-line."
+    },
+    {
+      "agent": "agent-02",
+      "summary": "Cyber-Noir B (CCTV): Surveillance aesthetic, grainy video feeds."
+    },
+    {
+      "agent": "agent-03",
+      "summary": "Hybrid (Observatory): Space telescope metaphor. Dark mode + Organic curves."
+    },
+    {
+      "agent": "agent-04",
+      "summary": "Solarpunk A (Greenhouse): Soft glass, plants, breathing animations."
+    },
+    {
+      "agent": "agent-05",
+      "summary": "Solarpunk B (Biomimicry): Cellular morphing shapes, microscope view."
+    },
+    {
+      "agent": "agent-06",
+      "summary": "Spatial (Atlas): Isometric mapping, city-planner aesthetic."
+    }
+  ],
+  "tags": [
+    "ui",
+    "meta",
+    "cyberpunk",
+    "solarpunk",
+    "spatial"
+  ],
+  "entry_point": "index.html"
+}

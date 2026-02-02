@@ -121,8 +121,8 @@ Use the [payments-site-homepage SWARM_SPEC.md](file:///Users/seanivore/Developme
 
   * **The challenge** — one clear, inspiring constraint
   * **Hard constraints** — non-negotiable requirements (form fields, tech stack, colors)
-  * **What [X] can do** — expansive exploration of the design space
-  * **What makes [X] interesting** — principles that elevate beyond obvious
+  * **What <X> can do** — expansive exploration of the design space
+  * **What makes <X> interesting** — principles that elevate beyond obvious
   * **Reference energy** — inspiration sources (not for copying, for mindset)
   * **Phases with cull criteria** — clear gates with reasons to eliminate
 

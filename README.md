@@ -58,10 +58,10 @@ swarm-designing/
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [SWARM_DESIGNING.md](./assets/docs/SWARM_DESIGNING.md) | Complete studio documentation |
-| [Workflow Library](./assets/workflow-library/README.md) | Commands and specs reference |
+| Document                                                         | Description                   |
+|------------------------------------------------------------------|-------------------------------|
+| [SWARM_DESIGNING.md](./assets/docs/SWARM_DESIGNING.md)           | Complete studio documentation |
+| [Workflow Library](./assets/workflow-library/README.md)          | Commands and specs reference  |
 | [GALLERY_ARCHITECTURE.md](./assets/docs/GALLERY_ARCHITECTURE.md) | Showcase website architecture |
 
 ---

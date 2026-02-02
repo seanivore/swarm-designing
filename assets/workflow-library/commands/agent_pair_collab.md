@@ -12,7 +12,7 @@
 
 The workflow is design to create a collecton of potential creative works by running batches of two agents in parallel with other couples all working on the same tasks. The strategy plays into many of LLMs strenghts while eliminating their primarily vulnerability: when an agent starts down a path, they are often compelled to follow through with it regardless of potentially having taken the wrong first step. By creating a collection of options, we're using the AI's talent for making novel and unexpected connections that can result in highly creative and innovative works. 
 
-This is a simplified version of a more collective and strategically layered workflow just called the [Parallel Volley Funnel](./parallel_volley_funnel.md) which allows for even more cross polination by matching up the best bits from various ideas that happen to go to gether quite well; a sort of evolutionary refinement. 
+This is a simplified version of a more collective and strategically layered workflow just called the [Parallel Volley Funnel](./para-volley-funnel.md) which allows for even more cross polination by matching up the best bits from various ideas that happen to go to gether quite well; a sort of evolutionary refinement. 
 
 Try not to be too prescriptive in your specification document as not to limit the agent's creativity. And agents should try not to carry their own ideas over to their partner's work when reviewing it. Instead, do you best to put yourself into the mindself of the creator of the works in front of you to perfect them, and to identify the best, try to put yourself into the mindset of the intended audience, user or buyer of the work. Though you work together, the lack of communication helps to validate the ideas, as they should not need explaining
 

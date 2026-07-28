@@ -49,3 +49,9 @@ dist/
 # Testing screenshots (local only, named IMG-*)
 **/testing/IMG-*
 
+# Design Spec Images 
+.agent/apple-ui-design/**.jpeg
+.agent/apple-ui-design/**.jpg
+# Personal, per-machine Claude Code permissions. Accumulates absolute local
+# paths, client filenames, and search patterns from real work — never commit it.
+.claude/settings.local.json
